@@ -1,0 +1,483 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DiploChain — Registre blockchain des diplômes du Burkina Faso</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --green-dark: #0a2e1a;
+    --green-mid: #0f4a28;
+    --green-accent: #1a7a3c;
+    --gold: #d4a017;
+    --gold-light: #f0c040;
+    --red: #cc2222;
+    --white: #f8f6f0;
+    --white-pure: #ffffff;
+    --gray-light: #e8e4dc;
+    --text-dark: #1a1a1a;
+    --text-muted: #4a4a4a;
+    --bg-light: #fefcf7;
+    --bg-soft: #f5f2ea;
+    --font-display: 'Syne', sans-serif;
+    --font-body: 'Space Grotesk', sans-serif;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body { 
+    font-family: var(--font-body); 
+    background: var(--bg-light); 
+    color: var(--text-dark); 
+    line-height: 1.6;
+  }
+
+  /* NAV */
+  nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    background: var(--white-pure);
+    backdrop-filter: blur(12px);
+    padding: 0 6%;
+    display: flex; align-items: center; justify-content: space-between;
+    height: 64px;
+    border-bottom: 1px solid rgba(212, 160, 23, 0.2);
+    box-shadow: 0 2px 10px rgba(0,0,0,0.02);
+  }
+  .nav-logo { font-family: var(--font-display); font-weight: 800; font-size: 20px; color: var(--green-dark); }
+  .nav-logo span { color: var(--gold); }
+  .nav-links { display: flex; gap: 28px; list-style: none; }
+  .nav-links a { color: var(--text-muted); text-decoration: none; font-size: 13px; font-weight: 600; letter-spacing: 0.4px; text-transform: uppercase; transition: color 0.2s; }
+  .nav-links a:hover { color: var(--green-accent); }
+
+  /* HERO */
+  .hero {
+    min-height: 100vh;
+    background: linear-gradient(135deg, var(--green-dark) 0%, #0f3a22 100%);
+    display: flex; flex-direction: column; justify-content: center;
+    padding: 130px 6% 90px;
+    position: relative; overflow: hidden;
+  }
+  .hero::after {
+    content: '';
+    position: absolute; top: -150px; right: -150px;
+    width: 600px; height: 600px; border-radius: 50%;
+    background: rgba(212,160,23,0.03);
+    pointer-events: none;
+  }
+  .hero-tag {
+    display: inline-flex; align-items: center; gap: 8px;
+    background: rgba(212,160,23,0.15); border: 1px solid rgba(212,160,23,0.3);
+    color: var(--gold-light); font-size: 11px; font-weight: 600;
+    letter-spacing: 1.5px; text-transform: uppercase;
+    padding: 6px 14px; border-radius: 2px; margin-bottom: 36px; width: fit-content;
+  }
+  .hero-tag::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: var(--gold); animation: pulse 2s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.5;transform:scale(0.8)} }
+
+  .hero h1 {
+    font-family: var(--font-display);
+    font-size: clamp(34px, 5vw, 60px);
+    font-weight: 800; color: var(--white);
+    line-height: 1.1; letter-spacing: -2px;
+    margin-bottom: 28px; max-width: 800px;
+  }
+  .hero h1 .accent { color: var(--gold); }
+
+  .hero-sub {
+    font-size: 16px; color: rgba(248,246,240,0.7);
+    max-width: 520px; margin-bottom: 48px;
+    font-weight: 400; line-height: 1.8;
+  }
+
+  .btn-primary {
+    background: var(--gold); color: var(--green-dark);
+    padding: 14px 28px; border-radius: 4px;
+    font-size: 14px; font-weight: 700; text-decoration: none;
+    transition: all 0.2s; display: inline-block;
+  }
+  .btn-primary:hover { background: var(--gold-light); transform: translateY(-2px); }
+
+  .hero-stats {
+    display: flex; gap: 52px;
+    margin-top: 72px; padding-top: 48px;
+    border-top: 1px solid rgba(248,246,240,0.1);
+    flex-wrap: wrap;
+  }
+  .stat-num { font-family: var(--font-display); font-size: 30px; font-weight: 800; color: var(--gold); letter-spacing: -1px; }
+  .stat-label { font-size: 12px; color: rgba(248,246,240,0.5); margin-top: 6px; max-width: 150px; line-height: 1.5; }
+
+  /* ALERT BAND */
+  .alert-band { background: var(--red); padding: 12px 0; overflow: hidden; }
+  .marquee { display: flex; gap: 60px; animation: scroll 30s linear infinite; white-space: nowrap; width: max-content; }
+  @keyframes scroll { 0%{transform:translateX(0)} 100%{transform:translateX(-50%)} }
+  .alert-item { font-size: 13px; color: white; font-weight: 500; }
+  .alert-item strong { font-weight: 700; }
+
+  /* SECTIONS */
+  section { padding: 110px 6%; }
+  .section-tag { font-size: 11px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: var(--green-accent); margin-bottom: 18px; }
+  .section-title { font-family: var(--font-display); font-size: clamp(26px, 3.5vw, 40px); font-weight: 800; letter-spacing: -1.5px; line-height: 1.15; margin-bottom: 18px; }
+  .section-sub { font-size: 15px; color: var(--text-muted); max-width: 580px; line-height: 1.8; margin-bottom: 64px; }
+
+  /* PROBLÈME */
+  .problem { background: var(--bg-light); }
+  .problem-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 28px; margin-bottom: 64px; }
+  .problem-card { background: var(--white-pure); border: 1px solid var(--gray-light); border-radius: 12px; padding: 36px; position: relative; overflow: hidden; transition: transform 0.2s, box-shadow 0.2s; }
+  .problem-card:hover { transform: translateY(-4px); box-shadow: 0 12px 24px rgba(0,0,0,0.05); }
+  .problem-card::before { content: ''; position: absolute; top: 0; left: 0; width: 4px; height: 100%; background: var(--red); }
+  .problem-card .card-num { font-family: var(--font-display); font-size: 40px; font-weight: 800; color: var(--red); letter-spacing: -1.5px; line-height: 1; margin-bottom: 10px; }
+  .problem-card .card-label { font-size: 14px; font-weight: 600; color: var(--text-dark); margin-bottom: 10px; }
+  .problem-card .card-desc { font-size: 13px; color: var(--text-muted); line-height: 1.7; }
+
+  .problem-quote { background: var(--bg-soft); border-radius: 12px; padding: 56px; position: relative; border: 1px solid var(--gray-light); }
+  .problem-quote::before { content: '❝'; position: absolute; top: 20px; left: 36px; font-size: 72px; color: var(--gold); opacity: 0.15; line-height: 1; font-family: serif; }
+  .problem-quote p { font-size: 17px; font-weight: 500; line-height: 1.7; max-width: 680px; margin: 0 auto; text-align: center; color: var(--text-dark); position: relative; z-index: 1; }
+  .problem-quote cite { display: block; margin-top: 18px; font-size: 12px; color: var(--green-accent); font-style: normal; font-weight: 600; letter-spacing: 0.5px; text-align: center; }
+
+  /* BLOCKCHAIN */
+  .blockchain { background: var(--bg-soft); }
+  .blockchain .section-title { color: var(--text-dark); }
+  .blockchain .section-tag { color: var(--green-accent); }
+  .blockchain .section-sub { color: var(--text-muted); }
+
+  .steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; margin-bottom: 64px; }
+  .step { background: var(--white-pure); border-radius: 12px; padding: 48px 36px; border: 1px solid var(--gray-light); transition: transform 0.2s; }
+  .step:hover { transform: translateY(-4px); }
+  .step-num { font-family: var(--font-display); font-size: 52px; font-weight: 800; color: rgba(212,160,23,0.15); line-height: 1; margin-bottom: 20px; letter-spacing: -2px; }
+  .step-icon { font-size: 26px; margin-bottom: 16px; display: block; }
+  .step h3 { font-size: 17px; font-weight: 700; margin-bottom: 12px; color: var(--green-dark); }
+  .step p { font-size: 14px; color: var(--text-muted); line-height: 1.8; }
+  .step p strong { color: var(--green-accent); }
+
+  .chain-wrap { background: var(--white-pure); border: 1px solid var(--gray-light); border-radius: 12px; padding: 48px; margin-bottom: 48px; }
+  .chain-wrap h3 { font-size: 17px; font-weight: 700; color: var(--green-dark); margin-bottom: 28px; }
+  .chain-viz { display: flex; align-items: center; overflow-x: auto; padding-bottom: 8px; }
+  .block { min-width: 165px; background: var(--bg-soft); border: 1px solid var(--gray-light); border-radius: 8px; padding: 16px; flex-shrink: 0; }
+  .block .block-label { font-size: 10px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: var(--gold); margin-bottom: 8px; }
+  .block .block-hash { font-family: monospace; font-size: 11px; color: var(--text-muted); word-break: break-all; line-height: 1.4; }
+  .block .block-data { font-size: 12px; color: var(--text-dark); margin-top: 8px; font-weight: 500; }
+  .chain-arrow { font-size: 18px; color: var(--gold); padding: 0 10px; flex-shrink: 0; }
+  .chain-caption { font-size: 13px; color: var(--text-muted); margin-top: 20px; line-height: 1.7; }
+
+  .pillars { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 56px; }
+  .pillar { background: var(--white-pure); border: 1px solid var(--gray-light); border-radius: 12px; padding: 36px; transition: transform 0.2s; }
+  .pillar:hover { transform: translateY(-4px); }
+  .pillar-icon { font-size: 26px; margin-bottom: 16px; display: block; }
+  .pillar h3 { font-size: 16px; font-weight: 700; color: var(--green-accent); margin-bottom: 12px; }
+  .pillar p { font-size: 14px; color: var(--text-muted); line-height: 1.8; }
+  .pillar p strong { color: var(--text-dark); }
+
+  .compare-title { font-family: var(--font-display); font-size: 22px; font-weight: 700; color: var(--text-dark); margin-bottom: 28px; letter-spacing: -0.5px; }
+  .compare { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+  .compare-col { border-radius: 12px; padding: 36px; }
+  .compare-col.before { background: rgba(204,34,34,0.05); border: 1px solid rgba(204,34,34,0.2); }
+  .compare-col.after { background: rgba(26,122,60,0.06); border: 1px solid rgba(26,122,60,0.2); }
+  .compare-col .col-label { font-size: 11px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 20px; }
+  .compare-col.before .col-label { color: #b91c1c; }
+  .compare-col.after .col-label { color: #15803d; }
+  .compare-col ul { list-style: none; display: flex; flex-direction: column; gap: 14px; }
+  .compare-col li { font-size: 14px; padding-left: 20px; position: relative; line-height: 1.6; color: var(--text-dark); }
+  .compare-col.before li::before { content: '—'; position: absolute; left: 0; color: #b91c1c; }
+  .compare-col.after li::before { content: '+'; position: absolute; left: 0; color: #15803d; }
+
+  /* IMPACT */
+  .impact { background: var(--bg-light); }
+  .impact-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 24px; margin-bottom: 56px; }
+  .impact-card { background: var(--white-pure); border: 1px solid var(--gray-light); border-radius: 12px; padding: 36px 24px; text-align: center; transition: transform 0.2s; }
+  .impact-card:hover { transform: translateY(-4px); }
+  .impact-icon { font-size: 28px; margin-bottom: 14px; display: block; }
+  .impact-num { font-family: var(--font-display); font-size: 32px; font-weight: 800; color: var(--green-accent); letter-spacing: -1px; margin-bottom: 8px; }
+  .impact-label { font-size: 13px; color: var(--text-muted); line-height: 1.5; }
+  .impact-text { font-size: 15px; color: var(--text-muted); max-width: 680px; line-height: 1.8; margin-bottom: 40px; }
+  .odd-badges { display: flex; gap: 12px; flex-wrap: wrap; }
+  .odd-badge { display: flex; align-items: center; gap: 10px; background: var(--white-pure); border: 1px solid var(--gray-light); border-radius: 40px; padding: 8px 20px; font-size: 13px; font-weight: 600; color: var(--text-dark); }
+  .odd-num { font-family: var(--font-display); font-size: 18px; font-weight: 800; color: var(--gold); }
+
+  /* FOOTER */
+  footer { background: var(--green-dark); padding: 56px 6% 36px; }
+  .footer-top { display: flex; justify-content: space-between; gap: 40px; flex-wrap: wrap; margin-bottom: 40px; padding-bottom: 40px; border-bottom: 1px solid rgba(248,246,240,0.1); }
+  .footer-logo { font-family: var(--font-display); font-size: 20px; font-weight: 800; color: var(--gold-light); margin-bottom: 10px; }
+  .footer-desc { font-size: 13px; color: rgba(248,246,240,0.5); max-width: 260px; line-height: 1.6; }
+  .footer-col h4 { font-size: 10px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: var(--gold); margin-bottom: 14px; }
+  .footer-col ul { list-style: none; display: flex; flex-direction: column; gap: 8px; }
+  .footer-col a { font-size: 13px; color: rgba(248,246,240,0.5); text-decoration: none; transition: color 0.2s; }
+  .footer-col a:hover { color: var(--white); }
+  .footer-bottom { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; }
+  .footer-bottom p { font-size: 12px; color: rgba(248,246,240,0.4); }
+  .hackathon-badge { background: rgba(212,160,23,0.15); border: 1px solid rgba(212,160,23,0.3); color: var(--gold-light); font-size: 11px; font-weight: 600; padding: 5px 12px; border-radius: 4px; letter-spacing: 0.5px; }
+
+  @media (max-width: 768px) {
+    .problem-grid, .steps, .pillars, .compare, .impact-grid { grid-template-columns: 1fr; }
+    .nav-links { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <div class="nav-logo">Diplo<span>Chain</span></div>
+  <ul class="nav-links">
+    <li><a href="#problem">Le problème</a></li>
+    <li><a href="#blockchain">La blockchain</a></li>
+    <li><a href="#impact">Impact</a></li>
+  </ul>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-tag">🇧🇫 Burkina Faso · MIABE Hackathon 2026 · BF-01</div>
+  <h1>Les faux diplômes coûtent<br>des <span class="accent">vies humaines.</span><br>La blockchain y met fin.</h1>
+  <p class="hero-sub">DiploChain inscrit chaque diplôme sur un registre cryptographique infalsifiable. Vérifiable par n'importe qui, partout, en 3 secondes. Sans intermédiaire, sans frais.</p>
+  <a href="#blockchain" class="btn-primary">Comprendre la solution →</a>
+  <div class="hero-stats">
+    <div>
+      <div class="stat-num">30%</div>
+      <div class="stat-label">des diplômes aux concours publics sont falsifiés</div>
+    </div>
+    <div>
+      <div class="stat-num">30 j</div>
+      <div class="stat-label">pour vérifier un diplôme manuellement aujourd'hui</div>
+    </div>
+    <div>
+      <div class="stat-num">3 s</div>
+      <div class="stat-label">avec DiploChain, publiquement, gratuitement</div>
+    </div>
+    <div>
+      <div class="stat-num">0 F</div>
+      <div class="stat-label">coût de vérification pour tout recruteur</div>
+    </div>
+  </div>
+</section>
+
+<!-- ALERT -->
+<div class="alert-band">
+  <div class="marquee">
+    <span class="alert-item"><strong>Sept. 2025</strong> — 21 agents révoqués dans 9 ministères pour faux diplômes</span>
+    <span class="alert-item"><strong>6 000 dossiers</strong> audités par le KORAG en 2025</span>
+    <span class="alert-item"><strong>500 000 FCFA</strong> — prix d'un faux diplôme universitaire au marché noir</span>
+    <span class="alert-item"><strong>Santé · Éducation · Défense</strong> — ministères touchés (2020-2023)</span>
+    <span class="alert-item"><strong>Sept. 2025</strong> — 21 agents révoqués dans 9 ministères pour faux diplômes</span>
+    <span class="alert-item"><strong>6 000 dossiers</strong> audités par le KORAG en 2025</span>
+    <span class="alert-item"><strong>500 000 FCFA</strong> — prix d'un faux diplôme universitaire au marché noir</span>
+    <span class="alert-item"><strong>Santé · Éducation · Défense</strong> — ministères touchés (2020-2023)</span>
+  </div>
+</div>
+
+<!-- PROBLÈME -->
+<section class="problem" id="problem">
+  <div class="section-tag">Le problème</div>
+  <h2 class="section-title">Un fléau systémique<br>aux conséquences mortelles</h2>
+  <p class="section-sub">Au Burkina Faso, vérifier un diplôme est impossible en pratique. Cette faille alimente directement la présence de faux médecins, enseignants et ingénieurs dans la fonction publique.</p>
+
+  <div class="problem-grid">
+    <div class="problem-card">
+      <div class="card-num">25–30%</div>
+      <div class="card-label">des diplômes aux concours publics sont estimés falsifiés</div>
+      <div class="card-desc">Selon le MJFPE (2022), entre un quart et un tiers des diplômes présentés lors des concours de la fonction publique burkinabè seraient frauduleux.</div>
+    </div>
+    <div class="problem-card">
+      <div class="card-num">500 000</div>
+      <div class="card-label">FCFA pour un faux diplôme universitaire au marché noir</div>
+      <div class="card-desc">Le marché des faux documents scolaires est structuré. Un faux diplôme se vend entre 50 000 et 500 000 FCFA selon le niveau et l'institution ciblée.</div>
+    </div>
+    <div class="problem-card">
+      <div class="card-num">15–30 j</div>
+      <div class="card-label">délai pour toute vérification manuelle</div>
+      <div class="card-desc">Vérifier un diplôme auprès d'un établissement demande 15 à 30 jours et coûte entre 20 000 et 50 000 FCFA. Ce délai rend la vérification systématique impossible.</div>
+    </div>
+    <div class="problem-card">
+      <div class="card-num">21</div>
+      <div class="card-label">agents révoqués en sept. 2025 dans 9 ministères</div>
+      <div class="card-desc">Santé, Éducation, Sécurité, Présidence du Faso… Après audit de 6 000 dossiers par le KORAG, 21 fonctionnaires ont été définitivement révoqués pour usage de faux diplômes.</div>
+    </div>
+  </div>
+
+  <div class="problem-quote">
+    <p>« Un faux diplôme n'est pas seulement une tricherie. C'est une compétence fictive là où la société exige de la compétence réelle. Chaque faux diplôme est une gifle pour ceux qui travaillent dur dans des conditions difficiles. »</p>
+    <cite>— 24heures.bf, après les révocations du 4 septembre 2025</cite>
+  </div>
+</section>
+
+<!-- BLOCKCHAIN -->
+<section class="blockchain" id="blockchain">
+  <div class="section-tag">La solution</div>
+  <h2 class="section-title">Pourquoi la blockchain<br>résout ce problème</h2>
+  <p class="section-sub">La blockchain n'est pas un mot à la mode. C'est une architecture technique qui rend la falsification de diplômes mathématiquement impossible. Voici comment.</p>
+
+  <!-- ÉTAPES -->
+  <div class="steps">
+    <div class="step">
+      <div class="step-num">01</div>
+      <span class="step-icon">🏛️</span>
+      <h3>L'établissement signe et enregistre</h3>
+      <p>L'université signe le diplôme avec sa <strong>clé cryptographique privée</strong>, connue d'elle seule. L'empreinte du diplôme est inscrite sur la blockchain. Sans cette clé, personne ne peut émettre un diplôme en son nom.</p>
+    </div>
+    <div class="step">
+      <div class="step-num">02</div>
+      <span class="step-icon">🔗</span>
+      <h3>Le diplôme rejoint la chaîne immuable</h3>
+      <p>Chaque enregistrement est lié au précédent par son <strong>empreinte cryptographique (hash)</strong>. Modifier un bloc invalide tous ceux qui suivent. La chaîne est répliquée sur des milliers de nœuds — aucun acteur seul ne peut l'altérer.</p>
+    </div>
+    <div class="step">
+      <div class="step-num">03</div>
+      <span class="step-icon">✅</span>
+      <h3>Tout le monde peut vérifier</h3>
+      <p>Le registre est <strong>public, gratuit, sans compte</strong>. Un recruteur à Ouagadougou, une ambassade à Paris, une entreprise à Abidjan accèdent au même registre de vérité en temps réel, en 3 secondes.</p>
+    </div>
+  </div>
+
+  <!-- CHAÎNE -->
+  <div class="chain-wrap">
+    <h3>🔗 Visualisation de la chaîne de blocs DiploChain</h3>
+    <div class="chain-viz">
+      <div class="block">
+        <div class="block-label">Bloc Genèse</div>
+        <div class="block-hash">a3f8c2d1e9b7...</div>
+        <div class="block-data">Registre des établissements accrédités</div>
+      </div>
+      <div class="chain-arrow">→</div>
+      <div class="block">
+        <div class="block-label">Diplôme #0042</div>
+        <div class="block-hash">7e4a1f3c8b2d...</div>
+        <div class="block-data">KABORÉ Issouf<br>Licence Informatique<br>USTA · 2024</div>
+      </div>
+      <div class="chain-arrow">→</div>
+      <div class="block">
+        <div class="block-label">Diplôme #0043</div>
+        <div class="block-hash">5c9b2e7a4f1d...</div>
+        <div class="block-data">SAWADOGO Amina<br>Master Médecine<br>UJKZ · 2024</div>
+      </div>
+      <div class="chain-arrow">→</div>
+      <div class="block" style="border-color:rgba(212,160,23,0.4)">
+        <div class="block-label" style="color:var(--gold)">Bloc suivant</div>
+        <div class="block-hash">2d8f1a5c9b3e...</div>
+        <div class="block-data" style="color:var(--green-accent)">Prochain diplôme<br>en attente...</div>
+      </div>
+    </div>
+    <p class="chain-caption">Chaque bloc contient le hash du bloc précédent. Altérer un enregistrement passé invalide automatiquement toute la chaîne — une impossibilité pratique sur un réseau distribué.</p>
+  </div>
+
+  <!-- 4 PILIERS -->
+  <div class="pillars">
+    <div class="pillar">
+      <div class="pillar-icon">🔑</div>
+      <h3>Signature cryptographique asymétrique</h3>
+      <p>Chaque établissement détient une paire de clés. La <strong>clé privée</strong> signe chaque diplôme émis. La <strong>clé publique</strong> permet à n'importe qui de vérifier cette signature. Il est mathématiquement impossible de signer sans la clé privée de l'établissement.</p>
+    </div>
+    <div class="pillar">
+      <div class="pillar-icon">🌐</div>
+      <h3>Registre distribué sans point de défaillance</h3>
+      <p>Le registre n'est pas sur un seul serveur. Il est répliqué sur des <strong>milliers de nœuds indépendants</strong>. Le corrompre nécessiterait de réécrire simultanément la majorité des nœuds du réseau — une impossibilité pratique.</p>
+    </div>
+    <div class="pillar">
+      <div class="pillar-icon">👁️</div>
+      <h3>Transparence publique totale</h3>
+      <p>Le registre est <strong>ouvert à tous</strong>, sans création de compte, sans frais. Aucun intermédiaire à contacter. La vérification se fait directement depuis le registre, en temps réel, depuis n'importe où dans le monde.</p>
+    </div>
+    <div class="pillar">
+      <div class="pillar-icon">🔒</div>
+      <h3>Protection des données personnelles</h3>
+      <p>Seule l'<strong>empreinte cryptographique</strong> du diplôme est inscrite sur la chaîne — jamais les données brutes. Le titulaire reste maître de son document et choisit à qui il partage son lien de vérification.</p>
+    </div>
+  </div>
+
+  <!-- AVANT / APRÈS -->
+  <p class="compare-title">Avant DiploChain vs. Avec DiploChain</p>
+  <div class="compare">
+    <div class="compare-col before">
+      <div class="col-label">❌ Système actuel</div>
+      <ul>
+        <li>Vérification en 15 à 30 jours par courrier ou visite</li>
+        <li>20 000 à 50 000 FCFA par vérification</li>
+        <li>Falsification aisée : photocopie, retouche, corruption</li>
+        <li>Vérification systématique impossible en pratique</li>
+        <li>Postes critiques occupés par des non-qualifiés</li>
+        <li>Aucune vérification internationale sans ambassade</li>
+      </ul>
+    </div>
+    <div class="compare-col after">
+      <div class="col-label">✓ Avec DiploChain</div>
+      <ul>
+        <li>Vérification instantanée en moins de 3 secondes</li>
+        <li>Gratuit pour tout recruteur, jury ou administration</li>
+        <li>Falsification techniquement impossible sans la clé privée</li>
+        <li>Vérification systématique à chaque recrutement</li>
+        <li>Seuls les vrais qualifiés accèdent aux postes critiques</li>
+        <li>Vérifiable depuis n'importe où dans le monde</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- IMPACT -->
+<section class="impact" id="impact">
+  <div class="section-tag">Impact attendu</div>
+  <h2 class="section-title">Ce que DiploChain<br>change concrètement</h2>
+  <p class="section-sub">En rendant la falsification impossible et la vérification instantanée, DiploChain protège des vies, valorise les diplômés légitimes et renforce la confiance dans les institutions.</p>
+
+  <div class="impact-grid">
+    <div class="impact-card">
+      <span class="impact-icon">⏱️</span>
+      <div class="impact-num">3 s</div>
+      <div class="impact-label">de vérification contre 15 à 30 jours aujourd'hui</div>
+    </div>
+    <div class="impact-card">
+      <span class="impact-icon">💰</span>
+      <div class="impact-num">0 F</div>
+      <div class="impact-label">coût de vérification — public et gratuit</div>
+    </div>
+    <div class="impact-card">
+      <span class="impact-icon">🛡️</span>
+      <div class="impact-num">100%</div>
+      <div class="impact-label">infalsifiabilité technique des diplômes enregistrés</div>
+    </div>
+    <div class="impact-card">
+      <span class="impact-icon">🌍</span>
+      <div class="impact-num">+30</div>
+      <div class="impact-label">universités et grandes écoles pouvant rejoindre le réseau</div>
+    </div>
+  </div>
+
+  <p class="impact-text">La vérification instantanée élimine les faux médecins, enseignants et ingénieurs dans la fonction publique. Les diplômés légitimes sont mieux valorisés sur le marché du travail local et international. Le Burkina Faso peut exporter ses compétences avec des preuves vérifiables partout dans le monde.</p>
+
+  <div class="odd-badges">
+    <div class="odd-badge"><span class="odd-num">4</span> ODD 4 — Éducation de qualité</div>
+    <div class="odd-badge"><span class="odd-num">8</span> ODD 8 — Travail décent</div>
+    <div class="odd-badge"><span class="odd-num">16</span> ODD 16 — Institutions efficaces</div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-top">
+    <div>
+      <div class="footer-logo">DiploChain</div>
+      <p class="footer-desc">Registre blockchain des diplômes du Burkina Faso. Un diplôme. Une empreinte. Une vérité.</p>
+    </div>
+    <div class="footer-col">
+      <h4>Navigation</h4>
+      <ul>
+        <li><a href="#problem">Le problème</a></li>
+        <li><a href="#blockchain">La blockchain</a></li>
+        <li><a href="#impact">Impact</a></li>
+      </ul>
+    </div>
+    <div class="footer-col">
+      <h4>À propos</h4>
+      <ul>
+        <li><a href="#">MIABE Hackathon 2026</a></li>
+        <li><a href="#">Projet BF-01</a></li>
+        <li><a href="#">ODD 4, 8, 16</a></li>
+      </ul>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <p>© 2026 DiploChain — Projet MIABE Hackathon BF-01 · Ouagadougou, Burkina Faso</p>
+    <div class="hackathon-badge">MIABE Hackathon 2026 · Phase 1</div>
+  </div>
+</footer>
+
+</body>
+</html>
